@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>PondFit - Kişisel ölçüm asistanı</title>
-<<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Dongle:wght@300;400;500;600;700&family=Karla:ital,wght@0,400;0,500;0,600;1,400&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300&display=swap" rel="stylesheet">
 <style>
@@ -912,8 +912,12 @@
 
   function setAuthGate(visible){
     $("auth-gate").hidden = !visible;
+
     $("account-bar").hidden = visible || !currentUser;
-    if(currentUser) $("account-email").textContent = currentUser.email || "";
+
+    if(currentUser){
+      $("account-email").textContent = currentUser.email || "";
+    }
   }
 
   function setAuthBusy(busy){
@@ -925,39 +929,137 @@
   }
 
   async function login(){
-    var email = $("auth-email").value.trim();
-    var password = $("auth-password").value;
-    if(!email || !password){ showAuthMessage("E-posta ve şifre gerekli.", true); return; }
-    setAuthBusy(true); showAuthMessage("");
-    try{
-      var r = await supabaseClient.auth.signInWithPassword({email:email,password:password});
-      if(r.error) throw r.error;
-      showAuthMessage("Giriş başarılı.");
-    }catch(e){
-      console.error(e);
-      showAuthMessage("Giriş yapılamadı: " + (e.message || "bilgileri kontrol et."), true);
-    }finally{ setAuthBusy(false); }
+  var email = $("auth-email").value.trim();
+  var password = $("auth-password").value;
+
+  if(!email || !password){
+    showAuthMessage("E-posta ve şifre gerekli.", true);
+    return;
   }
 
-  async function signup(){
-    var email = $("auth-email").value.trim();
-    var password = $("auth-password").value;
-    if(!email || !password){ showAuthMessage("E-posta ve şifre gerekli.", true); return; }
-    if(password.length < 6){ showAuthMessage("Şifre en az 6 karakter olmalı.", true); return; }
-    setAuthBusy(true); showAuthMessage("");
-    try{
-      var r = await supabaseClient.auth.signUp({email:email,password:password});
-      if(r.error) throw r.error;
-      if(r.data.session){
-        showAuthMessage("Hesap oluşturuldu ve giriş yapıldı.");
-      }else{
-        showAuthMessage("Hesap oluşturuldu. E-posta adresine gelen doğrulama bağlantısını aç, sonra giriş yap.");
-      }
-    }catch(e){
-      console.error(e);
-      showAuthMessage("Hesap oluşturulamadı: " + (e.message || "bilgileri kontrol et."), true);
-    }finally{ setAuthBusy(false); }
+  setAuthBusy(true);
+  showAuthMessage("");
+
+  try{
+    var r = await supabaseClient.auth.signInWithPassword({
+      email: email,
+      password: password
+    });
+
+    if(r.error) throw r.error;
+
+    currentUser = r.data.user;
+
+    if(!currentUser){
+      throw new Error("Kullanıcı oturumu alınamadı.");
+    }
+
+    /*
+     * Kullanıcının bulut verilerini yükle
+     */
+    await loadCloudForUser(currentUser);
+
+    /*
+     * Giriş ekranını kapat
+     */
+    setAuthGate(false);
+
+    /*
+     * Kullanıcının profili varsa ana ekrana,
+     * yoksa profil oluşturma ekranına gönder
+     */
+    if(active()){
+      render();
+      show("home");
+    }else{
+      openSetup(null);
+    }
+
+    showAuthMessage("");
+
+  }catch(e){
+    console.error("Giriş hatası:", e);
+
+    showAuthMessage(
+      "Giriş yapılamadı: " +
+      (e.message || "E-posta veya şifreyi kontrol et."),
+      true
+    );
+
+  }finally{
+    setAuthBusy(false);
   }
+}
+
+  async function signup(){
+  var email = $("auth-email").value.trim();
+  var password = $("auth-password").value;
+
+  if(!email || !password){
+    showAuthMessage("E-posta ve şifre gerekli.", true);
+    return;
+  }
+
+  if(password.length < 6){
+    showAuthMessage("Şifre en az 6 karakter olmalı.", true);
+    return;
+  }
+
+  setAuthBusy(true);
+  showAuthMessage("");
+
+  try{
+    var r = await supabaseClient.auth.signUp({
+      email: email,
+      password: password
+    });
+
+    if(r.error) throw r.error;
+
+    /*
+     * Supabase e-posta doğrulamasını kapattıysa
+     * session hemen gelir.
+     */
+    if(r.data.session && r.data.user){
+
+      currentUser = r.data.user;
+
+      await loadCloudForUser(currentUser);
+
+      setAuthGate(false);
+
+      if(active()){
+        render();
+        show("home");
+      }else{
+        openSetup(null);
+      }
+
+      showAuthMessage("");
+
+    }else{
+
+      /*
+       * E-posta doğrulaması açıksa session henüz yoktur.
+       */
+      showAuthMessage(
+        "Hesap oluşturuldu. E-posta adresine gelen doğrulama bağlantısını aç, ardından giriş yap."
+      );
+    }
+
+  }catch(e){
+    console.error("Kayıt hatası:", e);
+
+    showAuthMessage(
+      "Hesap oluşturulamadı: " +
+      (e.message || "bilgileri kontrol et."),
+      true
+    );
+
+  }finally{
+    setAuthBusy(false);
+  }
+}
 
   async function logout(){
     try{
