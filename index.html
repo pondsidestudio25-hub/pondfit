@@ -6,7 +6,7 @@
 <title>PondFit - Kişisel ölçüm asistanı</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Dongle:wght@300;400;500;600;700&family=Karla:ital,wght@0,400;0,500;0,600;1,400&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Karla:ital,wght@0,400;0,500;0,600;1,400&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg:#e7ede9;
@@ -158,378 +158,30 @@
   .entry-foot{margin-top:14px;display:flex;justify-content:flex-end}
 
   /* ---------- hesap / bulut ---------- */
-  /* ---------- PondFit giriş ekranı ---------- */
-
-.auth-gate{
-  position:fixed;
-  inset:0;
-  z-index:1000;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:20px;
-  overflow:auto;
-
-  background:
-    radial-gradient(
-      circle at 15% 15%,
-      rgba(188,220,214,.55),
-      transparent 30%
-    ),
-    radial-gradient(
-      circle at 90% 85%,
-      rgba(156,90,77,.08),
-      transparent 28%
-    ),
-    var(--bg);
-}
-
-/* hafif dekoratif su halkası */
-.auth-gate::before{
-  content:"";
-  position:absolute;
-  width:520px;
-  height:520px;
-  border:1px solid rgba(47,125,116,.12);
-  border-radius:50%;
-  transform:translate(35%,-25%);
-  pointer-events:none;
-}
-
-.auth-gate::after{
-  content:"";
-  position:absolute;
-  width:760px;
-  height:760px;
-  border:1px solid rgba(47,125,116,.06);
-  border-radius:50%;
-  transform:translate(-35%,25%);
-  pointer-events:none;
-}
-
-/* ana kart */
-.auth-card{
-  position:relative;
-  z-index:2;
-
-  width:min(450px,100%);
-  background:rgba(251,252,251,.94);
-  border:1px solid var(--line);
-  border-radius:12px;
-
-  padding:42px 42px 36px;
-
-  box-shadow:
-    0 24px 70px rgba(18,48,51,.10),
-    0 3px 12px rgba(18,48,51,.04);
-
-  animation:pondAuthIn .65s cubic-bezier(.22,.7,.3,1);
-}
-
-/* kartın üstündeki ince su çizgisi */
-.auth-card::before{
-  content:"";
-  position:absolute;
-  top:0;
-  left:14%;
-  right:14%;
-  height:2px;
-
-  background:
-    linear-gradient(
-      90deg,
-      transparent,
-      var(--water),
-      transparent
-    );
-
-  opacity:.65;
-}
-
-/* logo */
-.auth-card .mark{
-  margin:0 0 4px;
-
-  font-family:"Dongle",var(--serif);
-  font-size:52px;
-  font-weight:500;
-  line-height:.8;
-  letter-spacing:.01em;
-
-  text-align:center;
-  color:var(--ink);
-}
-
-.auth-card .mark em{
-  color:var(--water);
-  font-style:normal;
-  font-weight:400;
-}
-
-/* küçük açıklama */
-.auth-card::after{
-  content:"";
-}
-
-/* başlık */
-.auth-card h2{
-  margin:22px 0 5px;
-
-  font-family:var(--serif);
-  font-size:25px;
-  font-weight:400;
-  line-height:1.2;
-  letter-spacing:-.015em;
-
-  text-align:center;
-}
-
-/* başlığın altındaki açıklamayı oluşturmak için
-   HTML'de .lede varsa */
-.auth-card .lede{
-  margin:0 auto 25px;
-  max-width:34ch;
-
-  text-align:center;
-  font-size:13.5px;
-  color:var(--ink-3);
-}
-
-/* form */
-.auth-card .grid{
-  display:grid;
-  grid-template-columns:1fr;
-  gap:18px;
-}
-
-/* label */
-.auth-card .field label{
-  font-size:12px;
-  color:var(--ink-2);
-}
-
-/* input */
-.auth-card input[type=email],
-.auth-card input[type=password],
-.auth-card input[type=text]{
-  width:100%;
-
-  font:400 16px/1.4 var(--sans);
-  color:var(--ink);
-
-  background:#f7faf8;
-
-  border:1px solid var(--line);
-  border-radius:5px;
-
-  padding:11px 13px;
-
-  transition:
-    border-color .18s ease,
-    background .18s ease,
-    box-shadow .18s ease;
-}
-
-.auth-card input::placeholder{
-  color:#9aaba8;
-}
-
-.auth-card input:hover{
-  background:#f4f8f6;
-}
-
-.auth-card input:focus{
-  outline:none;
-
-  background:#fff;
-
-  border-color:var(--water);
-
-  box-shadow:
-    0 0 0 3px rgba(47,125,116,.10);
-}
-
-/* buton alanı */
-.auth-actions{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:9px;
-
-  margin-top:24px;
-}
-
-/* buton */
-.auth-actions .btn{
-  min-height:45px;
-
-  font:500 14px/1 var(--sans);
-
-  border-radius:4px;
-
-  padding:11px 16px;
-
-  cursor:pointer;
-
-  transition:
-    background .18s ease,
-    border-color .18s ease,
-    color .18s ease,
-    transform .18s ease,
-    box-shadow .18s ease;
-}
-
-/* giriş */
-.auth-actions .btn:not(.ghost){
-  background:var(--water-deep);
-  border:1px solid var(--water-deep);
-  color:#f4faf8;
-
-  box-shadow:0 5px 14px rgba(29,92,87,.13);
-}
-
-.auth-actions .btn:not(.ghost):hover{
-  background:var(--water);
-  border-color:var(--water);
-
-  transform:translateY(-1px);
-
-  box-shadow:0 7px 18px rgba(29,92,87,.17);
-}
-
-/* hesap oluştur */
-.auth-actions .btn.ghost{
-  background:transparent;
-  border:1px solid var(--line-2);
-  color:var(--water-deep);
-}
-
-.auth-actions .btn.ghost:hover{
-  background:#eef6f4;
-  border-color:var(--water);
-
-  transform:translateY(-1px);
-}
-
-/* mesaj */
-.auth-msg{
-  min-height:19px;
-
-  margin-top:15px;
-
-  font-size:12.5px;
-  line-height:1.45;
-
-  text-align:center;
-
-  color:var(--ink-2);
-}
-
-.auth-msg.err{
-  color:var(--clay);
-}
-
-/* küçük alt dekorasyon */
-.auth-card .auth-msg::after{
-  content:"";
-  display:block;
-
-  width:32px;
-  height:1px;
-
-  margin:17px auto 0;
-
-  background:var(--line);
-}
-
-/* giriş animasyonu */
-@keyframes pondAuthIn{
-  from{
-    opacity:0;
-    transform:translateY(14px) scale(.985);
+  .auth-gate{position:fixed;inset:0;z-index:1000;background:rgba(231,237,233,.96);
+    display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto}
+  .auth-card{width:min(440px,100%);background:var(--paper);border:1px solid var(--line);
+    border-radius:var(--r);padding:28px;box-shadow:0 12px 40px rgba(18,48,51,.08)}
+  .auth-card h2{margin-bottom:6px}
+  .auth-card .lede{margin-bottom:22px}
+  .auth-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
+  .auth-msg{font-size:13px;margin-top:14px;color:var(--ink-2)}
+  .auth-msg.err{color:var(--clay)}
+  .account-bar{display:flex;justify-content:flex-end;align-items:center;gap:10px;margin:-8px 0 18px;
+    font-size:12.5px;color:var(--ink-3)}
+  /* ---------- misc ---------- */
+  .empty{text-align:center;padding:40px 20px;color:var(--ink-2)}
+  .empty p{max-width:40ch;margin:0 auto 18px}
+  .note{font-size:12.5px;color:var(--ink-3);margin-top:22px;max-width:62ch}
+  .alert{border:1px solid var(--clay);border-radius:var(--r);background:#fbf3f1;color:var(--clay);
+    padding:11px 14px;font-size:13px;margin-bottom:18px}
+  footer{margin-top:56px;border-top:1px solid var(--line-2);padding-top:14px;
+    display:flex;gap:16px;flex-wrap:wrap;align-items:center}
+  footer .spacer{flex:1}
+  [hidden]{display:none !important}
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none !important;transition:none !important}
   }
-
-  to{
-    opacity:1;
-    transform:translateY(0) scale(1);
-  }
-}
-
-/* mobil */
-@media (max-width:600px){
-
-  .auth-gate{
-    align-items:center;
-    padding:
-      max(16px,env(safe-area-inset-left))
-      max(16px,env(safe-area-inset-right));
-  }
-
-  .auth-gate::before{
-    width:360px;
-    height:360px;
-    transform:translate(35%,-35%);
-  }
-
-  .auth-gate::after{
-    width:520px;
-    height:520px;
-    transform:translate(-35%,30%);
-  }
-
-  .auth-card{
-    width:100%;
-    max-width:420px;
-
-    padding:34px 22px 28px;
-
-    border-radius:10px;
-  }
-
-  .auth-card .mark{
-    font-size:48px;
-  }
-
-  .auth-card h2{
-    font-size:23px;
-    margin-top:21px;
-  }
-
-  .auth-card .lede{
-    font-size:13px;
-    margin-bottom:22px;
-  }
-
-  .auth-actions{
-    grid-template-columns:1fr;
-  }
-
-  .auth-actions .btn{
-    min-height:47px;
-  }
-}
-
-/* çok küçük telefonlar */
-@media (max-width:360px){
-
-  .auth-card{
-    padding:30px 18px 24px;
-  }
-
-  .auth-card .mark{
-    font-size:44px;
-  }
-
-  .auth-card h2{
-    font-size:21px;
-  }
-}
-
-/* hareket azaltma tercihi */
-@media (prefers-reduced-motion:reduce){
-  .auth-card{
-    animation:none;
-  }
-}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -546,49 +198,24 @@
 <body>
 <div id="auth-gate" class="auth-gate">
   <div class="auth-card">
-
     <div class="mark">Pond<em>Fit</em></div>
-
-    <p class="lede">
-      Ölçümlerini kaydet, değişimini takip et.
-    </p>
-
+    <h2 id="auth-title">PondFit hesabına giriş</h2>
+    <p class="lede" id="auth-lede">Verilerini cihazlar arasında eşitlemek için hesabınla giriş yap.</p>
     <div class="grid">
-
       <div class="field">
         <label for="auth-email">E-posta</label>
-        <input
-          id="auth-email"
-          type="email"
-          autocomplete="email"
-          placeholder="ornek@email.com"
-        >
+        <input id="auth-email" type="email" autocomplete="email" placeholder="ornek@email.com">
       </div>
-
       <div class="field">
         <label for="auth-password">Şifre</label>
-        <input
-          id="auth-password"
-          type="password"
-          autocomplete="current-password"
-          placeholder="En az 6 karakter"
-        >
+        <input id="auth-password" type="password" autocomplete="current-password" placeholder="En az 6 karakter">
       </div>
-
     </div>
-
     <div class="auth-actions">
-      <button class="btn" id="auth-login">
-        Giriş yap
-      </button>
-
-      <button class="btn ghost" id="auth-signup">
-        Hesap oluştur
-      </button>
+      <button class="btn" id="auth-login">Giriş yap</button>
+      <button class="btn ghost" id="auth-signup">Hesap oluştur</button>
     </div>
-
     <div class="auth-msg" id="auth-msg"></div>
-
   </div>
 </div>
 
@@ -912,12 +539,8 @@
 
   function setAuthGate(visible){
     $("auth-gate").hidden = !visible;
-
     $("account-bar").hidden = visible || !currentUser;
-
-    if(currentUser){
-      $("account-email").textContent = currentUser.email || "";
-    }
+    if(currentUser) $("account-email").textContent = currentUser.email || "";
   }
 
   function setAuthBusy(busy){
@@ -929,137 +552,39 @@
   }
 
   async function login(){
-  var email = $("auth-email").value.trim();
-  var password = $("auth-password").value;
-
-  if(!email || !password){
-    showAuthMessage("E-posta ve şifre gerekli.", true);
-    return;
+    var email = $("auth-email").value.trim();
+    var password = $("auth-password").value;
+    if(!email || !password){ showAuthMessage("E-posta ve şifre gerekli.", true); return; }
+    setAuthBusy(true); showAuthMessage("");
+    try{
+      var r = await supabaseClient.auth.signInWithPassword({email:email,password:password});
+      if(r.error) throw r.error;
+      showAuthMessage("Giriş başarılı.");
+    }catch(e){
+      console.error(e);
+      showAuthMessage("Giriş yapılamadı: " + (e.message || "bilgileri kontrol et."), true);
+    }finally{ setAuthBusy(false); }
   }
-
-  setAuthBusy(true);
-  showAuthMessage("");
-
-  try{
-    var r = await supabaseClient.auth.signInWithPassword({
-      email: email,
-      password: password
-    });
-
-    if(r.error) throw r.error;
-
-    currentUser = r.data.user;
-
-    if(!currentUser){
-      throw new Error("Kullanıcı oturumu alınamadı.");
-    }
-
-    /*
-     * Kullanıcının bulut verilerini yükle
-     */
-    await loadCloudForUser(currentUser);
-
-    /*
-     * Giriş ekranını kapat
-     */
-    setAuthGate(false);
-
-    /*
-     * Kullanıcının profili varsa ana ekrana,
-     * yoksa profil oluşturma ekranına gönder
-     */
-    if(active()){
-      render();
-      show("home");
-    }else{
-      openSetup(null);
-    }
-
-    showAuthMessage("");
-
-  }catch(e){
-    console.error("Giriş hatası:", e);
-
-    showAuthMessage(
-      "Giriş yapılamadı: " +
-      (e.message || "E-posta veya şifreyi kontrol et."),
-      true
-    );
-
-  }finally{
-    setAuthBusy(false);
-  }
-}
 
   async function signup(){
-  var email = $("auth-email").value.trim();
-  var password = $("auth-password").value;
-
-  if(!email || !password){
-    showAuthMessage("E-posta ve şifre gerekli.", true);
-    return;
-  }
-
-  if(password.length < 6){
-    showAuthMessage("Şifre en az 6 karakter olmalı.", true);
-    return;
-  }
-
-  setAuthBusy(true);
-  showAuthMessage("");
-
-  try{
-    var r = await supabaseClient.auth.signUp({
-      email: email,
-      password: password
-    });
-
-    if(r.error) throw r.error;
-
-    /*
-     * Supabase e-posta doğrulamasını kapattıysa
-     * session hemen gelir.
-     */
-    if(r.data.session && r.data.user){
-
-      currentUser = r.data.user;
-
-      await loadCloudForUser(currentUser);
-
-      setAuthGate(false);
-
-      if(active()){
-        render();
-        show("home");
+    var email = $("auth-email").value.trim();
+    var password = $("auth-password").value;
+    if(!email || !password){ showAuthMessage("E-posta ve şifre gerekli.", true); return; }
+    if(password.length < 6){ showAuthMessage("Şifre en az 6 karakter olmalı.", true); return; }
+    setAuthBusy(true); showAuthMessage("");
+    try{
+      var r = await supabaseClient.auth.signUp({email:email,password:password});
+      if(r.error) throw r.error;
+      if(r.data.session){
+        showAuthMessage("Hesap oluşturuldu ve giriş yapıldı.");
       }else{
-        openSetup(null);
+        showAuthMessage("Hesap oluşturuldu. E-posta adresine gelen doğrulama bağlantısını aç, sonra giriş yap.");
       }
-
-      showAuthMessage("");
-
-    }else{
-
-      /*
-       * E-posta doğrulaması açıksa session henüz yoktur.
-       */
-      showAuthMessage(
-        "Hesap oluşturuldu. E-posta adresine gelen doğrulama bağlantısını aç, ardından giriş yap."
-      );
-    }
-
-  }catch(e){
-    console.error("Kayıt hatası:", e);
-
-    showAuthMessage(
-      "Hesap oluşturulamadı: " +
-      (e.message || "bilgileri kontrol et."),
-      true
-    );
-
-  }finally{
-    setAuthBusy(false);
+    }catch(e){
+      console.error(e);
+      showAuthMessage("Hesap oluşturulamadı: " + (e.message || "bilgileri kontrol et."), true);
+    }finally{ setAuthBusy(false); }
   }
-}
 
   async function logout(){
     try{
