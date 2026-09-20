@@ -157,6 +157,18 @@
   .row .num{font-family:var(--serif);font-size:17px}
   .entry-foot{margin-top:14px;display:flex;justify-content:flex-end}
 
+  /* ---------- hesap / bulut ---------- */
+  .auth-gate{position:fixed;inset:0;z-index:1000;background:rgba(231,237,233,.96);
+    display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto}
+  .auth-card{width:min(440px,100%);background:var(--paper);border:1px solid var(--line);
+    border-radius:var(--r);padding:28px;box-shadow:0 12px 40px rgba(18,48,51,.08)}
+  .auth-card h2{margin-bottom:6px}
+  .auth-card .lede{margin-bottom:22px}
+  .auth-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
+  .auth-msg{font-size:13px;margin-top:14px;color:var(--ink-2)}
+  .auth-msg.err{color:var(--clay)}
+  .account-bar{display:flex;justify-content:flex-end;align-items:center;gap:10px;margin:-8px 0 18px;
+    font-size:12.5px;color:var(--ink-3)}
   /* ---------- misc ---------- */
   .empty{text-align:center;padding:40px 20px;color:var(--ink-2)}
   .empty p{max-width:40ch;margin:0 auto 18px}
@@ -171,14 +183,53 @@
     *{animation:none !important;transition:none !important}
   }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+  const SUPABASE_URL = "https://aqsfjvytesmgqbmlqzlt.supabase.co";
+  const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_RTWXHk6FumAKisaW5RXTKQ_yv0YqOpW";
+
+  const supabaseClient = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_PUBLISHABLE_KEY
+  );
+</script>
 </head>
 <body>
+<div id="auth-gate" class="auth-gate">
+  <div class="auth-card">
+    <div class="mark">Pond<em>Fit</em></div>
+    <h2 id="auth-title">PondFit hesabına giriş</h2>
+    <p class="lede" id="auth-lede">Verilerini cihazlar arasında eşitlemek için hesabınla giriş yap.</p>
+    <div class="grid">
+      <div class="field">
+        <label for="auth-email">E-posta</label>
+        <input id="auth-email" type="email" autocomplete="email" placeholder="ornek@email.com">
+      </div>
+      <div class="field">
+        <label for="auth-password">Şifre</label>
+        <input id="auth-password" type="password" autocomplete="current-password" placeholder="En az 6 karakter">
+      </div>
+    </div>
+    <div class="auth-actions">
+      <button class="btn" id="auth-login">Giriş yap</button>
+      <button class="btn ghost" id="auth-signup">Hesap oluştur</button>
+    </div>
+    <div class="auth-msg" id="auth-msg"></div>
+  </div>
+</div>
+
 <div class="wrap">
 
   <header>
     <div class="mark">Pond<em>Fit</em></div>
     <div class="tagline">Ölçüm defteri</div>
   </header>
+
+  <div class="account-bar" id="account-bar" hidden>
+    <span id="account-email"></span>
+    <button class="link" id="auth-logout">Çıkış yap</button>
+  </div>
 
   <div id="storage-alert" class="alert" hidden>
     Tarayıcı bu sayfada kayıt tutamıyor, girdiğin veriler sekme kapanınca silinir. Aşağıdaki “Yedek al” ile dışarı aktarabilirsin.
@@ -189,7 +240,7 @@
   <!-- ================= PROFİL FORMU ================= -->
   <section id="setup" hidden>
     <h2 id="setup-title">Profil ekle</h2>
-    <p class="lede" id="setup-lede">Bu bilgiler yağ oranı formülünde kullanılıyor ve yalnızca bu bilgisayarda kalıyor.</p>
+    <p class="lede" id="setup-lede">Bu bilgiler yağ oranı hesabında kullanılıyor ve hesabına bağlı olarak bulutta saklanıyor.</p>
     <div class="panel">
       <div class="grid">
         <div class="field" style="grid-column:1/-1;max-width:340px">
@@ -320,6 +371,9 @@
   /* ---------- depolama ---------- */
   var KEY = "pondfit.v2", OLD = "pondfit.v1";
   var memory = null, canStore = true;
+  var currentUser = null;
+  var cloudReady = false;
+  var authBusy = false;
   try { localStorage.setItem("__pf","1"); localStorage.removeItem("__pf"); }
   catch(e){ canStore = false; document.getElementById("storage-alert").hidden = false; }
 
@@ -363,10 +417,26 @@
       return blank();
     }catch(e){ return blank(); }
   }
-  function save(){
-    if(!canStore){ memory = state; return; }
-    try{ localStorage.setItem(KEY, JSON.stringify(state)); }
-    catch(e){ canStore=false; memory=state; document.getElementById("storage-alert").hidden=false; }
+  async function save(){
+    if(!canStore){ memory = state; }
+    else {
+      try{ localStorage.setItem(KEY, JSON.stringify(state)); }
+      catch(e){ canStore=false; memory=state; document.getElementById("storage-alert").hidden=false; }
+    }
+
+    if(currentUser && cloudReady){
+      try{
+        var result = await supabaseClient.from("pond_data").upsert({
+          user_id: currentUser.id,
+          data: state,
+          updated_at: new Date().toISOString()
+        }, {onConflict:"user_id"});
+        if(result.error) throw result.error;
+      }catch(e){
+        console.error("Buluta kaydedilemedi:", e);
+        showAuthMessage("Bulut kaydı sırasında hata oluştu. Yerel yedek korunuyor.", true);
+      }
+    }
   }
   var state = load();
   var editingId = null;
@@ -458,6 +528,129 @@
       return a.date < b.date ? 1 : -1;
     });
   }
+
+  /* ---------- hesap / bulut senkronizasyonu ---------- */
+  function showAuthMessage(msg, isError){
+    var el = $("auth-msg");
+    if(!el) return;
+    el.textContent = msg || "";
+    el.className = "auth-msg" + (isError ? " err" : "");
+  }
+
+  function setAuthGate(visible){
+    $("auth-gate").hidden = !visible;
+    $("account-bar").hidden = visible || !currentUser;
+    if(currentUser) $("account-email").textContent = currentUser.email || "";
+  }
+
+  function setAuthBusy(busy){
+    authBusy = busy;
+    $("auth-login").disabled = busy;
+    $("auth-signup").disabled = busy;
+    $("auth-login").textContent = busy ? "Bekleyin…" : "Giriş yap";
+    $("auth-signup").textContent = busy ? "Bekleyin…" : "Hesap oluştur";
+  }
+
+  async function login(){
+    var email = $("auth-email").value.trim();
+    var password = $("auth-password").value;
+    if(!email || !password){ showAuthMessage("E-posta ve şifre gerekli.", true); return; }
+    setAuthBusy(true); showAuthMessage("");
+    try{
+      var r = await supabaseClient.auth.signInWithPassword({email:email,password:password});
+      if(r.error) throw r.error;
+      showAuthMessage("Giriş başarılı.");
+    }catch(e){
+      console.error(e);
+      showAuthMessage("Giriş yapılamadı: " + (e.message || "bilgileri kontrol et."), true);
+    }finally{ setAuthBusy(false); }
+  }
+
+  async function signup(){
+    var email = $("auth-email").value.trim();
+    var password = $("auth-password").value;
+    if(!email || !password){ showAuthMessage("E-posta ve şifre gerekli.", true); return; }
+    if(password.length < 6){ showAuthMessage("Şifre en az 6 karakter olmalı.", true); return; }
+    setAuthBusy(true); showAuthMessage("");
+    try{
+      var r = await supabaseClient.auth.signUp({email:email,password:password});
+      if(r.error) throw r.error;
+      if(r.data.session){
+        showAuthMessage("Hesap oluşturuldu ve giriş yapıldı.");
+      }else{
+        showAuthMessage("Hesap oluşturuldu. E-posta adresine gelen doğrulama bağlantısını aç, sonra giriş yap.");
+      }
+    }catch(e){
+      console.error(e);
+      showAuthMessage("Hesap oluşturulamadı: " + (e.message || "bilgileri kontrol et."), true);
+    }finally{ setAuthBusy(false); }
+  }
+
+  async function logout(){
+    try{
+      var r = await supabaseClient.auth.signOut();
+      if(r.error) throw r.error;
+    }catch(e){
+      console.error(e);
+      alert("Çıkış yapılamadı: " + (e.message || ""));
+    }
+  }
+
+  async function loadCloudForUser(user){
+    cloudReady = false;
+    var r = await supabaseClient.from("pond_data").select("data").eq("user_id",user.id).maybeSingle();
+    if(r.error) throw r.error;
+
+    var cloudState = r.data && r.data.data ? normalize(r.data.data) : null;
+    var localState = load();
+
+    if(cloudState && cloudState.profiles.length){
+      state = cloudState;
+    }else if(localState.profiles.length){
+      state = localState;
+      var saveResult = await supabaseClient.from("pond_data").upsert({
+        user_id:user.id,
+        data:state,
+        updated_at:new Date().toISOString()
+      }, {onConflict:"user_id"});
+      if(saveResult.error) throw saveResult.error;
+    }else{
+      state = cloudState || blank();
+    }
+
+    if(canStore){
+      try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){}
+    }
+    cloudReady = true;
+  }
+
+  $("auth-login").addEventListener("click", login);
+  $("auth-signup").addEventListener("click", signup);
+  $("auth-logout").addEventListener("click", logout);
+  $("auth-password").addEventListener("keydown", function(ev){ if(ev.key === "Enter") login(); });
+  $("auth-email").addEventListener("keydown", function(ev){ if(ev.key === "Enter") login(); });
+
+  supabaseClient.auth.onAuthStateChange(function(event, session){
+    setTimeout(async function(){
+      if(session && session.user){
+        currentUser = session.user;
+        try{
+          await loadCloudForUser(currentUser);
+          setAuthGate(false);
+          if(active()){ render(); show("home"); } else { openSetup(null); }
+        }catch(e){
+          console.error("Bulut verisi yüklenemedi:", e);
+          cloudReady = false;
+          showAuthMessage("Bulut verileri yüklenemedi: " + (e.message || ""), true);
+          setAuthGate(true);
+        }
+      }else{
+        currentUser = null;
+        cloudReady = false;
+        setAuthGate(true);
+      }
+    },0);
+  });
 
   /* ---------- profil şeridi ---------- */
   function renderSwitcher(){
@@ -588,7 +781,7 @@
     $("setup-title").textContent = p ? "Profili düzenle" : (state.profiles.length ? "Yeni profil" : "İlk profili oluştur");
     $("setup-lede").textContent = p
       ? "Değişiklikler geçmiş ölçümlerin hesaplarına da yansır."
-      : "Bu bilgiler yağ oranı formülünde kullanılıyor ve yalnızca bu bilgisayarda kalıyor. İstediğin kadar profil ekleyebilirsin; her profilin ölçümleri ayrı tutulur.";
+      : "Bu bilgiler yağ oranı hesabında kullanılıyor ve hesabına bağlı olarak bulutta saklanıyor. İstediğin kadar profil ekleyebilirsin; her profilin ölçümleri ayrı tutulur.";
     $("p-cancel").hidden = state.profiles.length === 0;
     $("p-err").hidden = true;
     $("p-name").value = p ? p.name : "";
@@ -722,7 +915,25 @@
   });
 
   /* ---------- başlat ---------- */
-  if(active()){ render(); show("home"); } else { openSetup(null); }
+  (async function(){
+    setAuthGate(true);
+    try{
+      var r = await supabaseClient.auth.getSession();
+      if(r.error) throw r.error;
+      if(r.data.session && r.data.session.user){
+        currentUser = r.data.session.user;
+        await loadCloudForUser(currentUser);
+        setAuthGate(false);
+        if(active()){ render(); show("home"); } else { openSetup(null); }
+      }else{
+        setAuthGate(true);
+      }
+    }catch(e){
+      console.error("Oturum başlatılamadı:", e);
+      showAuthMessage("Supabase oturumu başlatılamadı: " + (e.message || ""), true);
+      setAuthGate(true);
+    }
+  })();
 })();
 </script>
 </body>
